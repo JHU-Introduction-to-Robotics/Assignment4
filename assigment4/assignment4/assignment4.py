@@ -130,7 +130,7 @@ class KinematicChain:
 
     Input
     :param ks: A 2D array that lists the different axes of rotation (rows) for each joint
-    :param tt: A 2D array that lists the translation from the previous joint to the current
+    :param ts: A 2D array that lists the translation from the previous joint to the current
     '''
     def __init__(self, ks, ts):
 
@@ -152,7 +152,25 @@ class KinematicChain:
     '''
     def pose(self, Q, index=-1, p_i = [0, 0, 0]):
 
-        return None
+        # pad point with 1 to make it 4x1 vector
+        p = np.zeros((4, 1))
+        for i in range(0, 3):
+            p[i, 0] = p_i[i]
+        p[3, 0] = 1
+
+        # check for valid index
+        if (index >= 0) and (index < self.N_joints):
+            E = hr_matrix(self.k[index], self.t[index], Q[index])
+
+        # calculate full forward kinematics by multiplying homogenous matrices together until final joint is reached
+        else:
+            E = hr_matrix(self.k[0], self.t[0], Q[0])
+
+            for i in range(1, self.N_joints):
+                E = np.matmul(E, hr_matrix(self.k[i], self.t[i], Q[i]))
+
+        p_res = np.matmul(E, p) # calculate new pose
+        return np.array([p_res[0], p_res[1], p_res[2]])
 
     '''
     Performs the inverse_kinematics using the pseudo-jacobian
