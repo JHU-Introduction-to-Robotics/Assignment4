@@ -153,10 +153,10 @@ class KinematicChain:
     def pose(self, Q, index=-1, p_i = [0, 0, 0]):
 
         # pad point with 1 to make it 4x1 vector
-        p = np.zeros((4, 1))
-        for i in range(0, 3):
-            p[i, 0] = p_i[i]
-        p[3, 0] = 1
+        p = [p_i[0], p_i[1], p_i[2], 1]
+        p = np.reshape(p, (4, 1))
+
+        E = 0 # forward declaring the homogenous matrix
 
         # check for valid index
         if (index >= 0) and (index < self.N_joints):
@@ -166,11 +166,12 @@ class KinematicChain:
         else:
             E = hr_matrix(self.k[0], self.t[0], Q[0])
 
+            # calculate full kinematic chain by muliplying homogenous matrices together
             for i in range(1, self.N_joints):
                 E = np.matmul(E, hr_matrix(self.k[i], self.t[i], Q[i]))
 
         p_res = np.matmul(E, p) # calculate new pose
-        return np.array([p_res[0], p_res[1], p_res[2]])
+        return [float(p_res[0]), float(p_res[1]), float(p_res[2])]
 
     '''
     Performs the inverse_kinematics using the pseudo-jacobian
@@ -221,7 +222,18 @@ class KinematicChain:
     '''
     def jacobian(self, Q, p_eff_N = [0, 0, 0]):
 
-        return None
+        Jv = np.zeros(((self.N_joints + 1), self.N_joints)) # forward declare Jacobian matrix which is 3 x N
+
+        # calculate each column of the Jacobian
+        for i in range(0, self.N_joints):
+            p_i_0 = self.pose(Q, i, p_eff_N)
+            Jv_i = np.cross(self.k[i], (np.subtract(p_eff_N, p_i_0)))
+
+            # copy jacobian column into Jacobian matrix
+            for j in range(0, (self.N_joints + 1)):
+                Jv[j, i] = Jv_i[j]
+
+        return Jv
 
 def main():
 
