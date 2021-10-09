@@ -159,16 +159,19 @@ class KinematicChain:
         E = 0 # forward declaring the homogenous matrix
 
         # check for valid index
+        # calculate full forward kinematics by multiplying homogenous matrices together until index joint is reached
         if (index >= 0) and (index < self.N_joints):
-            E = hr_matrix(self.k[index], self.t[index], Q[index])
-
-        # calculate full forward kinematics by multiplying homogenous matrices together until final joint is reached
-        else:
             E = hr_matrix(self.k[0], self.t[0], Q[0])
 
             # calculate full kinematic chain by muliplying homogenous matrices together
-            for i in range(1, self.N_joints):
-                E = np.matmul(E, hr_matrix(self.k[i], self.t[i], Q[i]))
+            for i in range(1, (index + 1)):
+                E_B_i = hr_matrix(self.k[i], self.t[i], Q[i])
+                E = np.matmul(E, E_B_i)
+
+        # calculate position of last joint in case where no index is provided
+        else:
+            lastJointIndex = (self.N_joints - 1)
+            E = hr_matrix(self.k[lastJointIndex], self.t[lastJointIndex], Q[lastJointIndex])
 
         p_res = np.matmul(E, p) # calculate new pose
         return [float(p_res[0]), float(p_res[1]), float(p_res[2])]
@@ -223,11 +226,12 @@ class KinematicChain:
     def jacobian(self, Q, p_eff_N = [0, 0, 0]):
 
         Jv = np.zeros(((self.N_joints + 1), self.N_joints)) # forward declare Jacobian matrix which is 3 x N
+        p_eff_0 = self.pose(Q, (self.N_joints - 1), p_eff_N) # pose of end effector in first joints frame of reference
 
         # calculate each column of the Jacobian
         for i in range(0, self.N_joints):
-            p_i_0 = self.pose(Q, i, p_eff_N)
-            Jv_i = np.cross(self.k[i], (np.subtract(p_eff_N, p_i_0)))
+            p_i_0 = self.pose(Q, i, [0, 0, 0])
+            Jv_i = np.cross(self.k[i], (np.subtract(p_eff_0, p_i_0)))
 
             # copy jacobian column into Jacobian matrix
             for j in range(0, (self.N_joints + 1)):
