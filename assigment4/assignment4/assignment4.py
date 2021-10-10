@@ -235,6 +235,20 @@ class KinematicChain:
 
 def main():
 
+    # Some notes about my implementation:
+    # Unfortunately no matter what I did/tried I could not get the simulation to converge
+    # I am pretty confident I implemented the axis-angle rotation matrix correctly since that came from the lecture notes
+    # I am also confident that I implemented the homogenous and inverse homogenous matrices correctly since those also
+    # came from the lecture notes
+    # Regarding the pose function I am also confident of my implementation since it follows the convention/logic laid out
+    # in the lecture notes.
+    # Regarding the jacobian I implemented it based on the examples that we went over in lecture but I suspect my calculation,
+    # of the p^B_eff based on p^N_eff is wrong since my simulation did not converge. I was also confused by the fact that
+    # function headers referred to p^N_eff as a translation and not a point in the last joints frame of reference.
+    # Overall I am unsure quite what I did wrong here but I suspect there is a mistake in my Jacobian function.
+    # If you could provide any feedback on what I missed or did wrong as part of the grading I would greatly appreciate it,
+    # since I am honestly unsure what I missed and I feel like I have a solid grasp on the material for lecture 4.
+    # Thanks so much!
     ks = np.array([[0,0,1],[0,0,1]])
     ts = np.array([[0,0,0.5],[1,0,0]])
     p_eff_2 = [1,0,0]
