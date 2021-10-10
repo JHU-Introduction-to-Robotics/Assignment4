@@ -170,8 +170,15 @@ class KinematicChain:
 
         # calculate position of last joint in case where no index is provided
         else:
-            lastJointIndex = (self.N_joints - 1)
-            E = hr_matrix(self.k[lastJointIndex], self.t[lastJointIndex], Q[lastJointIndex])
+            #lastJointIndex = (self.N_joints - 1)
+            #E = hr_matrix(self.k[lastJointIndex], self.t[lastJointIndex], Q[lastJointIndex])
+
+            E = hr_matrix(self.k[0], self.t[0], Q[0])
+
+            # calculate full kinematic chain by muliplying homogenous matrices together
+            for i in range(1, self.N_joints):
+                E_B_i = hr_matrix(self.k[i], self.t[i], Q[i])
+                E = np.matmul(E, E_B_i)
 
         p_res = np.matmul(E, p) # calculate new pose
         return [float(p_res[0]), float(p_res[1]), float(p_res[2])]
@@ -226,7 +233,7 @@ class KinematicChain:
     def jacobian(self, Q, p_eff_N = [0, 0, 0]):
 
         Jv = np.zeros(((self.N_joints + 1), self.N_joints)) # forward declare Jacobian matrix which is 3 x N
-        p_eff_0 = self.pose(Q, (self.N_joints - 1), p_eff_N) # pose of end effector in first joints frame of reference
+        p_eff_0 = self.pose(Q, -1, p_eff_N) # pose of end effector in first joints frame of reference
 
         # calculate each column of the Jacobian
         for i in range(0, self.N_joints):
