@@ -47,7 +47,7 @@ def axis_angle_rot_matrix(k, q):
     R[1, 2] = (ky * kz * v_theta) - (kx * sin_theta)
     R[2, 0] = (kx * kz * v_theta) - (ky * sin_theta)
     R[2, 1] = (ky * kz * v_theta) + (kx * sin_theta)
-    R[2, 2] = (kz * kz) + cos_theta
+    R[2, 2] = (kz * kz * v_theta) + cos_theta
 
     return R
 
@@ -68,22 +68,15 @@ def hr_matrix(k, t, q):
     E = np.zeros((4, 4))
 
     # Adding in rotation matrix to the homogenous representation matrix
-    E[0, 0] = R[0, 0]
-    E[0, 1] = R[0, 1]
-    E[0, 2] = R[0, 2]
-    E[1, 0] = R[1, 0]
-    E[1, 1] = R[1, 1]
-    E[1, 2] = R[1, 2]
-    E[2, 0] = R[2, 0]
-    E[2, 1] = R[2, 1]
-    E[2, 2] = R[2, 2]
+    for i in range(0, 3):
+        for j in range(0, 3):
+            E[i, j] = R[i, j]
 
     # Adding in translation matrix to the homogenous representation matrix
-    E[0, 3] = t[0]
-    E[1, 3] = t[1]
-    E[2, 3] = t[2]
+    for i in range(0, 3):
+        E[i, 3] = t[i]
     E[3, 3] = 1
-    
+
     return E
 
 '''
@@ -106,20 +99,13 @@ def inverse_hr_matrix(k_i, t_i, q_i):
     E = np.zeros((4, 4))
 
     # Adding in rotation matrix transpose to the homogenous representation matrix
-    E[0, 0] = R_tranpose[0, 0]
-    E[0, 1] = R_tranpose[0, 1]
-    E[0, 2] = R_tranpose[0, 2]
-    E[1, 0] = R_tranpose[1, 0]
-    E[1, 1] = R_tranpose[1, 1]
-    E[1, 2] = R_tranpose[1, 2]
-    E[2, 0] = R_tranpose[2, 0]
-    E[2, 1] = R_tranpose[2, 1]
-    E[2, 2] = R_tranpose[2, 2]
+    for i in range(0, 3):
+        for j in range(0, 3):
+            E[i, j] = R_tranpose[i, j]
 
     # Adding in translation matrix to the homogenous representation matrix
-    E[0, 3] = t_inv[0]
-    E[1, 3] = t_inv[1]
-    E[2, 3] = t_inv[2]
+    for i in range(0, 3):
+        E[i, 3] = t_inv[i]
     E[3, 3] = 1
 
     return E
