@@ -139,30 +139,29 @@ class KinematicChain:
     def pose(self, Q, index=-1, p_i = [0, 0, 0]):
 
         # pad point with 1 to make it 4x1 vector
-        p = [p_i[0], p_i[1], p_i[2], 1]
-        p = np.reshape(p, (4, 1))
+        p = np.zeros((4, 1))
 
-        E = 0 # forward declaring the homogenous matrix
+        # copy values from p_i
+        for i in range(0, 3):
+            p[i, 0] = p_i[i]
+        p[3, 0] = 1 # pad point with 1 to make it 4x1 vector
+
+        E = np.identity(4) # forward declaring the homogenous matrix
 
         # check for valid index
         # calculate full forward kinematics by multiplying homogenous matrices together until index joint is reached
         if (index >= 0) and (index < self.N_joints):
-            E = hr_matrix(self.k[0], self.t[0], Q[0])
 
             # calculate full kinematic chain by muliplying homogenous matrices together
-            for i in range(1, (index + 1)):
+            for i in range(0, (index + 1)):
                 E_B_i = hr_matrix(self.k[i], self.t[i], Q[i])
                 E = np.matmul(E, E_B_i)
 
         # calculate position of last joint in case where no index is provided
         else:
-            #lastJointIndex = (self.N_joints - 1)
-            #E = hr_matrix(self.k[lastJointIndex], self.t[lastJointIndex], Q[lastJointIndex])
-
-            E = hr_matrix(self.k[0], self.t[0], Q[0])
 
             # calculate full kinematic chain by muliplying homogenous matrices together
-            for i in range(1, self.N_joints):
+            for i in range(0, self.N_joints):
                 E_B_i = hr_matrix(self.k[i], self.t[i], Q[i])
                 E = np.matmul(E, E_B_i)
 
@@ -219,12 +218,14 @@ class KinematicChain:
     def jacobian(self, Q, p_eff_N = [0, 0, 0]):
 
         Jv = np.zeros(((self.N_joints + 1), self.N_joints)) # forward declare Jacobian matrix which is 3 x N
-        p_eff_0 = self.pose(Q, -1, p_eff_N) # pose of end effector in first joints frame of reference
+        p_eff_0 = self.pose(Q, p_i = p_eff_N) # pose of end effector in global frame
 
         # calculate each column of the Jacobian
         for i in range(0, self.N_joints):
-            p_i_0 = self.pose(Q, i, [0, 0, 0])
-            Jv_i = np.cross(self.k[i], (np.subtract(p_eff_0, p_i_0)))
+            p_i_0 = self.pose(Q, i) # pose of i_th joint in global frame
+            p_eff_0_minus_p_i_0 = np.subtract(p_eff_0, p_i_0)
+            k_i = self.k[i]
+            Jv_i = np.cross(k_i, p_eff_0_minus_p_i_0)
 
             # copy jacobian column into Jacobian matrix
             for j in range(0, (self.N_joints + 1)):
